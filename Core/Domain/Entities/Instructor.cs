@@ -33,8 +33,12 @@ namespace Domain.Entities
 
         public string OfficeAddress { get; set; }
 
+        [Required]
+        public string PasswordHash { get; set; } // Added password field
+
         // Navigation properties
         public ICollection<Course> Courses { get; set; }
         public ICollection<Student> Students { get; set; }
+        public ICollection<Schedule> Schedules { get; set; }
     }
 }

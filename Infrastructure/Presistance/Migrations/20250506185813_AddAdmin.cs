@@ -62,7 +62,8 @@ namespace Presistance.Migrations
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Phone = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Department = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    OfficeAddress = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    OfficeAddress = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -206,6 +207,7 @@ namespace Presistance.Migrations
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Phone = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CGPA = table.Column<float>(type: "real", nullable: false),
+                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     InstructorId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
@@ -238,6 +240,37 @@ namespace Presistance.Migrations
                         principalTable: "Courses",
                         principalColumn: "Code",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Schedules",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CourseCode = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    InstructorId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    DayOfWeek = table.Column<int>(type: "int", nullable: false),
+                    StartTime = table.Column<TimeSpan>(type: "time", nullable: false),
+                    EndTime = table.Column<TimeSpan>(type: "time", nullable: false),
+                    Location = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsLecture = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Schedules", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Schedules_Courses_CourseCode",
+                        column: x => x.CourseCode,
+                        principalTable: "Courses",
+                        principalColumn: "Code",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Schedules_Instructors_InstructorId",
+                        column: x => x.InstructorId,
+                        principalTable: "Instructors",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -346,6 +379,32 @@ namespace Presistance.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "StudentSchedules",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    StudentId = table.Column<int>(type: "int", nullable: false),
+                    ScheduleId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StudentSchedules", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_StudentSchedules_Schedules_ScheduleId",
+                        column: x => x.ScheduleId,
+                        principalTable: "Schedules",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_StudentSchedules_Students_StudentId",
+                        column: x => x.StudentId,
+                        principalTable: "Students",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AbsenceExcusals_LectureId",
                 table: "AbsenceExcusals",
@@ -421,6 +480,16 @@ namespace Presistance.Migrations
                 column: "CourseCode");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Schedules_CourseCode",
+                table: "Schedules",
+                column: "CourseCode");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Schedules_InstructorId",
+                table: "Schedules",
+                column: "InstructorId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_StudentCourses_CourseCode",
                 table: "StudentCourses",
                 column: "CourseCode");
@@ -429,6 +498,16 @@ namespace Presistance.Migrations
                 name: "IX_Students_InstructorId",
                 table: "Students",
                 column: "InstructorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StudentSchedules_ScheduleId",
+                table: "StudentSchedules",
+                column: "ScheduleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StudentSchedules_StudentId",
+                table: "StudentSchedules",
+                column: "StudentId");
         }
 
         /// <inheritdoc />
@@ -462,6 +541,9 @@ namespace Presistance.Migrations
                 name: "StudentCourses");
 
             migrationBuilder.DropTable(
+                name: "StudentSchedules");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
@@ -469,6 +551,9 @@ namespace Presistance.Migrations
 
             migrationBuilder.DropTable(
                 name: "Lectures");
+
+            migrationBuilder.DropTable(
+                name: "Schedules");
 
             migrationBuilder.DropTable(
                 name: "Students");

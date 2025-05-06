@@ -22,6 +22,8 @@ namespace Presistance.Data
         public DbSet<AbsenceExcusal> AbsenceExcusals { get; set; }
         public DbSet<StudentCourse> StudentCourses { get; set; }
         public DbSet<Alert> Alerts { get; set; }
+        public DbSet<Schedule> Schedules { get; set; }
+        public DbSet<StudentSchedule> StudentSchedules { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -54,6 +56,24 @@ namespace Presistance.Data
             .HasOne(l => l.Course)
             .WithMany(c => c.Lectures)
             .HasForeignKey(l => l.CourseCode);
+
+            builder.Entity<Schedule>()
+            .HasOne(s => s.Instructor)
+            .WithMany(i => i.Schedules)
+            .HasForeignKey(s => s.InstructorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<StudentSchedule>()
+                .HasOne(ss => ss.Student)
+                .WithMany(s => s.StudentSchedules)
+                .HasForeignKey(ss => ss.StudentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<StudentSchedule>()
+                .HasOne(ss => ss.Schedule)
+                .WithMany()
+                .HasForeignKey(ss => ss.ScheduleId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

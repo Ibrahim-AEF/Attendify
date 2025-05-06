@@ -72,7 +72,8 @@ namespace Attendify
             // Add AutoMapper
             builder.Services.AddAutoMapper(typeof(Program));
 
-
+            builder.Services.AddSingleton<IPasswordHasher<Instructor>, PasswordHasher<Instructor>>();
+            builder.Services.AddSingleton<IPasswordHasher<Student>, PasswordHasher<Student>>();
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

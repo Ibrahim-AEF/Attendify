@@ -8,6 +8,7 @@ namespace Shared
 {
     public class StudentDto
     {
+        public int Id { get; set; }
         public string StudentId { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
@@ -15,5 +16,6 @@ namespace Shared
         public string Phone { get; set; }
         public float CGPA { get; set; }
         public string InstructorId { get; set; }
+        public string Password { get; set; } // Added password field
     }
 }
