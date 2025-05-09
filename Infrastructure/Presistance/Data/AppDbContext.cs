@@ -74,6 +74,11 @@ namespace Presistance.Data
                 .WithMany()
                 .HasForeignKey(ss => ss.ScheduleId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Attendance>()
+            .HasOne(a => a.Lecture)
+            .WithMany()
+            .HasForeignKey(a => a.LectureId);
         }
     }
 }

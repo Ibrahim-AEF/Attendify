@@ -180,12 +180,17 @@ namespace Presistance.Migrations
                     b.Property<int>("LectureId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("LectureId1")
+                        .HasColumnType("int");
+
                     b.Property<int>("StudentId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("LectureId");
+
+                    b.HasIndex("LectureId1");
 
                     b.HasIndex("StudentId");
 
@@ -214,7 +219,7 @@ namespace Presistance.Migrations
 
             modelBuilder.Entity("Domain.Entities.Instructor", b =>
                 {
-                    b.Property<string>("Id")
+                    b.Property<string>("InstructorId")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Department")
@@ -226,10 +231,6 @@ namespace Presistance.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("InstructorId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -249,7 +250,7 @@ namespace Presistance.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.HasKey("InstructorId");
 
                     b.ToTable("Instructors");
                 });
@@ -571,10 +572,14 @@ namespace Presistance.Migrations
             modelBuilder.Entity("Domain.Entities.Attendance", b =>
                 {
                     b.HasOne("Domain.Entities.Lecture", "Lecture")
-                        .WithMany("Attendances")
+                        .WithMany()
                         .HasForeignKey("LectureId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Domain.Entities.Lecture", null)
+                        .WithMany("Attendances")
+                        .HasForeignKey("LectureId1");
 
                     b.HasOne("Domain.Entities.Student", "Student")
                         .WithMany("Attendances")

@@ -82,7 +82,7 @@ namespace Presentation
                 return Unauthorized(new { message = "Invalid email or password" });
             }
 
-            var token = _jwtHelper.GenerateJwtToken(instructor.Id, instructor.Email, $"{instructor.FirstName} {instructor.LastName}", "Instructor");
+            var token = _jwtHelper.GenerateJwtToken(instructor.InstructorId, instructor.Email, $"{instructor.FirstName} {instructor.LastName}", "Instructor");
 
             return Ok(new LoginResponseDto
             {

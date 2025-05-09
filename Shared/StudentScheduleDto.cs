@@ -9,6 +9,11 @@ namespace Shared
     public class StudentScheduleDto
     {
         public string StudentId { get; set; }
-        public List<int> ScheduleIds { get; set; } // IDs of the schedules to assign
+        public List<StudentCourseScheduleDto> CourseSchedules { get; set; }
+    }
+    public class StudentCourseScheduleDto
+    {
+        public string CourseCode { get; set; }
+        public bool IncludeAllSections { get; set; } = true;
     }
 }

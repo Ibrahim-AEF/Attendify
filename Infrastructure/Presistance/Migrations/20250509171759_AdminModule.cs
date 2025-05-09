@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Presistance.Migrations
 {
     /// <inheritdoc />
-    public partial class AddAdmin : Migration
+    public partial class AdminModule : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -55,8 +55,7 @@ namespace Presistance.Migrations
                 name: "Instructors",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    InstructorId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    InstructorId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -67,7 +66,7 @@ namespace Presistance.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Instructors", x => x.Id);
+                    table.PrimaryKey("PK_Instructors", x => x.InstructorId);
                 });
 
             migrationBuilder.CreateTable(
@@ -191,7 +190,7 @@ namespace Presistance.Migrations
                         name: "FK_Courses_Instructors_InstructorId",
                         column: x => x.InstructorId,
                         principalTable: "Instructors",
-                        principalColumn: "Id",
+                        principalColumn: "InstructorId",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -217,7 +216,7 @@ namespace Presistance.Migrations
                         name: "FK_Students_Instructors_InstructorId",
                         column: x => x.InstructorId,
                         principalTable: "Instructors",
-                        principalColumn: "Id",
+                        principalColumn: "InstructorId",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -269,7 +268,7 @@ namespace Presistance.Migrations
                         name: "FK_Schedules_Instructors_InstructorId",
                         column: x => x.InstructorId,
                         principalTable: "Instructors",
-                        principalColumn: "Id",
+                        principalColumn: "InstructorId",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -360,7 +359,8 @@ namespace Presistance.Migrations
                     LectureId = table.Column<int>(type: "int", nullable: false),
                     AttendanceTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsPresent = table.Column<bool>(type: "bit", nullable: false),
-                    IsExcused = table.Column<bool>(type: "bit", nullable: false)
+                    IsExcused = table.Column<bool>(type: "bit", nullable: false),
+                    LectureId1 = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -371,6 +371,11 @@ namespace Presistance.Migrations
                         principalTable: "Lectures",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Attendances_Lectures_LectureId1",
+                        column: x => x.LectureId1,
+                        principalTable: "Lectures",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Attendances_Students_StudentId",
                         column: x => x.StudentId,
@@ -463,6 +468,11 @@ namespace Presistance.Migrations
                 name: "IX_Attendances_LectureId",
                 table: "Attendances",
                 column: "LectureId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Attendances_LectureId1",
+                table: "Attendances",
+                column: "LectureId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Attendances_StudentId",

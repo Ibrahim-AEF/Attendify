@@ -124,16 +124,22 @@ namespace Presentation
                 return NotFound(new { message = "Student not found" });
             }
 
-            // Verify all schedule IDs exist
-            var existingScheduleIds = await _context.Schedules
-                .Where(s => scheduleDto.ScheduleIds.Contains(s.Id))
-                .Select(s => s.Id)
+            var courseCodes = scheduleDto.CourseSchedules.Select(c => c.CourseCode).Distinct();
+
+            // Verify all courses exist
+            var existingCourses = await _context.Courses
+                .Where(c => courseCodes.Contains(c.Code))
+                .Select(c => c.Code)
                 .ToListAsync();
 
-            var invalidIds = scheduleDto.ScheduleIds.Except(existingScheduleIds).ToList();
-            if (invalidIds.Any())
+            var missingCourses = courseCodes.Except(existingCourses).ToList();
+            if (missingCourses.Any())
             {
-                return BadRequest(new { message = $"Invalid schedule IDs: {string.Join(", ", invalidIds)}" });
+                return BadRequest(new
+                {
+                    message = "Some courses not found",
+                    missingCourses = missingCourses
+                });
             }
 
             // Remove existing schedules for this student
@@ -144,18 +150,45 @@ namespace Presentation
             _context.StudentSchedules.RemoveRange(existingStudentSchedules);
 
             // Add new schedules
-            var studentSchedules = scheduleDto.ScheduleIds.Select(scheduleId => new StudentSchedule
+            var studentSchedules = new List<StudentSchedule>();
+            foreach (var courseSchedule in scheduleDto.CourseSchedules)
             {
-                StudentId = student.Id,
-                ScheduleId = scheduleId
-            }).ToList();
+                // Get all schedules for this course
+                var schedules = await _context.Schedules
+                    .Where(s => s.CourseCode == courseSchedule.CourseCode)
+                    .ToListAsync();
+
+                if (!schedules.Any())
+                {
+                    return BadRequest(new
+                    {
+                        message = $"No schedules found for course {courseSchedule.CourseCode}"
+                    });
+                }
+
+                // Add either all sections or just lectures based on IncludeAllSections
+                var schedulesToAdd = courseSchedule.IncludeAllSections
+                    ? schedules
+                    : schedules.Where(s => s.IsLecture).ToList();
+
+                studentSchedules.AddRange(schedulesToAdd.Select(schedule => new StudentSchedule
+                {
+                    StudentId = student.Id,
+                    ScheduleId = schedule.Id
+                }));
+            }
 
             await _context.StudentSchedules.AddRangeAsync(studentSchedules);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Student schedule updated successfully" });
+            return Ok(new
+            {
+                message = "Student schedule updated successfully",
+                assignedCourses = scheduleDto.CourseSchedules.Select(c => c.CourseCode)
+            });
         }
 
+        [Authorize(Roles = "Admin,Student")]
         [HttpGet("{studentId}/schedule")]
         public async Task<IActionResult> GetStudentSchedule(string studentId)
         {

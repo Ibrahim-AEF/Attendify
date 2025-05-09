@@ -8,7 +8,7 @@ namespace Shared
 {
     public class InstructorDto
     {
-        public string Id { get; set; }
+        //public string Id { get; set; }
         public string InstructorId { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }

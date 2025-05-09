@@ -9,10 +9,8 @@ namespace Domain.Entities
 {
     public class Instructor
     {
-        [Key]
-        public string Id { get; set; } // Will be same as Identity UserId
 
-        [Required]
+        [Key]
         public string InstructorId { get; set; } // University ID
 
         [Required]

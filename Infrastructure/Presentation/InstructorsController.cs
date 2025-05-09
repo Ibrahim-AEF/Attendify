@@ -40,28 +40,10 @@ namespace Presentation
                 return BadRequest(new { message = "Email already exists" });
             }
 
-            //// Create a user account for the instructor
-            //var user = new Admin
-            //{
-            //    UserName = instructorDto.Email,
-            //    Email = instructorDto.Email,
-            //    FullName = $"{instructorDto.FirstName} {instructorDto.LastName}",
-            //    PhoneNumber = instructorDto.Phone
-            //};
-
-            //var result = await _userManager.CreateAsync(user, instructorDto.Password);
-            //if (!result.Succeeded)
-            //{
-            //    return BadRequest(new { message = "Failed to create user account", errors = result.Errors });
-            //}
-
-            //// Add to Instructor role
-            //await _userManager.AddToRoleAsync(user, "Instructor");
-
             // Create instructor record
             var instructor = new Instructor
             {
-                Id=instructorDto.Id,
+                //Id=instructorDto.Id,
                 InstructorId = instructorDto.InstructorId,
                 FirstName= instructorDto.FirstName,
                 LastName = instructorDto.LastName,
@@ -84,7 +66,7 @@ namespace Presentation
             var instructors = await _context.Instructors
                 .Select(i => new
                 {
-                    i.Id,
+                    i.InstructorId,
                     Name =$"{i.FirstName} {i.LastName}",
                     i.Email,
                     i.Phone,

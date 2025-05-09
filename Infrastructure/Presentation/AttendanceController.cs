@@ -40,7 +40,11 @@ namespace Presentation
         [HttpGet("reports/{studentId}")]
         public async Task<IActionResult> GetStudentAttendanceReport(string studentId)
         {
+
             var student = await _context.Students
+                .Include(s => s.StudentSchedules)
+                    .ThenInclude(ss => ss.Schedule)
+                        .ThenInclude(s => s.Course)
                 .Include(s => s.Attendances)
                     .ThenInclude(a => a.Lecture)
                         .ThenInclude(l => l.Course)
@@ -51,21 +55,38 @@ namespace Presentation
                 return NotFound(new { message = "Student not found" });
             }
 
-            var courses = student.Attendances
-                .Select(a => a.Lecture.Course)
+            var registeredCourses = student.StudentSchedules
+                .Select(ss => ss.Schedule.Course)
                 .Distinct()
-                .Select(c => new
-                {
-                    Subject = c.Code,
-                    Action = "Report"
-                })
                 .ToList();
+
+            var coursesWithAttendance = registeredCourses.Select(course =>
+            {
+                var courseAttendances = student.Attendances
+                    .Where(a => a.Lecture.Course.Code == course.Code)
+                    .ToList();
+
+                var totalClasses = courseAttendances.Count;
+                var presentDays = courseAttendances.Count(a => a.IsPresent);
+                var attendancePercentage = totalClasses > 0 ?
+                    (presentDays / (float)totalClasses) * 100 : 0;
+
+                return new
+                {
+                    Subject = course.Code,
+                    CourseName = course.Name,
+                    Action = "Report",
+                    //TotalClasses = totalClasses,
+                    //PresentDays = presentDays,
+                    //AttendancePercentage = $"{attendancePercentage:F1}%"
+                };
+            }).ToList();
 
             return Ok(new
             {
                 StudentName = $"{student.FirstName} {student.LastName}",
                 StudentId = student.StudentId,
-                Courses = courses
+                Courses = coursesWithAttendance
             });
         }
 
