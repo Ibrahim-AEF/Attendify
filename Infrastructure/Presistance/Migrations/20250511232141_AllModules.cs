@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Presistance.Migrations
 {
     /// <inheritdoc />
-    public partial class AdminModule : Migration
+    public partial class AllModules : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -228,6 +228,8 @@ namespace Presistance.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     CourseCode = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Date = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    LectureName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    QRCodeExpiry = table.Column<DateTime>(type: "datetime2", nullable: false),
                     QRCode = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>

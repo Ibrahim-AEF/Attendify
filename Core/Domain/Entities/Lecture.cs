@@ -17,6 +17,9 @@ namespace Domain.Entities
 
         [Required]
         public DateTime Date { get; set; }
+        public string LectureName { get; set; }
+
+        public DateTime QRCodeExpiry { get; set; }
 
         public string QRCode { get; set; } 
 

@@ -17,8 +17,18 @@ namespace Attendify
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll",
+                    builder =>
+                    {
+                        builder.AllowAnyOrigin()
+                               .AllowAnyMethod()
+                               .AllowAnyHeader();
+                    });
+            });
 
+            // Add services to the container.
             //Add DbContext
             builder.Services.AddDbContext<AppDbContext>(options =>
               options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -75,12 +85,18 @@ namespace Attendify
             builder.Services.AddSingleton<IPasswordHasher<Instructor>, PasswordHasher<Instructor>>();
             builder.Services.AddSingleton<IPasswordHasher<Student>, PasswordHasher<Student>>();
 
+            //
+            builder.Services.AddScoped<JwtHelper>();
+            builder.Services.AddSingleton<IPasswordHasher<Instructor>, PasswordHasher<Instructor>>();
+
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
+
+            app.UseCors("AllowAll");
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

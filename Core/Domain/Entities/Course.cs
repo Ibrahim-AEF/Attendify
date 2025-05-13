@@ -22,5 +22,6 @@ namespace Domain.Entities
         public Instructor Instructor { get; set; }
         public ICollection<Lecture> Lectures { get; set; }
         public ICollection<StudentCourse> StudentCourses { get; set; }
+        public ICollection<Schedule> Schedules { get; set; }
     }
 }

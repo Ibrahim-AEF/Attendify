@@ -21,6 +21,11 @@ namespace Attendify.Helpers
             return GenerateJwtToken(admin.Id, admin.Email, admin.FullName, "Admin");
         }
 
+        public string GenerateJwtToken(Instructor instructor)
+        {
+            return GenerateJwtToken(instructor.InstructorId, instructor.Email, $"{instructor.FirstName} {instructor.LastName}", "Instructor");
+        }
+
         public string GenerateJwtToken(string userId, string email, string fullName, string role)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));

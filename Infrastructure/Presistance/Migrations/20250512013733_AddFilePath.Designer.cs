@@ -12,8 +12,8 @@ using Presistance.Data;
 namespace Presistance.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250509171759_AdminModule")]
-    partial class AdminModule
+    [Migration("20250512013733_AddFilePath")]
+    partial class AddFilePath
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -32,6 +32,10 @@ namespace Presistance.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FileUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool?>("IsApproved")
                         .HasColumnType("bit");
@@ -273,9 +277,16 @@ namespace Presistance.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("LectureName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("QRCode")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("QRCodeExpiry")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -620,7 +631,7 @@ namespace Presistance.Migrations
             modelBuilder.Entity("Domain.Entities.Schedule", b =>
                 {
                     b.HasOne("Domain.Entities.Course", "Course")
-                        .WithMany()
+                        .WithMany("Schedules")
                         .HasForeignKey("CourseCode")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -739,6 +750,8 @@ namespace Presistance.Migrations
             modelBuilder.Entity("Domain.Entities.Course", b =>
                 {
                     b.Navigation("Lectures");
+
+                    b.Navigation("Schedules");
 
                     b.Navigation("StudentCourses");
                 });
