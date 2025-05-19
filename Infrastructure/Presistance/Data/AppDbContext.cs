@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -56,6 +57,12 @@ namespace Presistance.Data
             .HasOne(l => l.Course)
             .WithMany(c => c.Lectures)
             .HasForeignKey(l => l.CourseCode);
+
+            builder.Entity<Lecture>()
+           .HasOne(l => l.Schedule)
+           .WithMany()
+           .HasForeignKey(l => l.ScheduleId)
+           .OnDelete(DeleteBehavior.NoAction);
 
             builder.Entity<Schedule>()
             .HasOne(s => s.Instructor)

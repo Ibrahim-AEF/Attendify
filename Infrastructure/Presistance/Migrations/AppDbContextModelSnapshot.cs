@@ -281,9 +281,14 @@ namespace Presistance.Migrations
                     b.Property<DateTime>("QRCodeExpiry")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("ScheduleId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CourseCode");
+
+                    b.HasIndex("ScheduleId");
 
                     b.ToTable("Lectures");
                 });
@@ -618,7 +623,15 @@ namespace Presistance.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.Schedule", "Schedule")
+                        .WithMany()
+                        .HasForeignKey("ScheduleId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.Navigation("Course");
+
+                    b.Navigation("Schedule");
                 });
 
             modelBuilder.Entity("Domain.Entities.Schedule", b =>

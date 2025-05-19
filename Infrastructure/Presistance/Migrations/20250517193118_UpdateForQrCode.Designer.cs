@@ -12,8 +12,8 @@ using Presistance.Data;
 namespace Presistance.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250512013733_AddFilePath")]
-    partial class AddFilePath
+    [Migration("20250517193118_UpdateForQrCode")]
+    partial class UpdateForQrCode
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -32,10 +32,6 @@ namespace Presistance.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("FileUrl")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool?>("IsApproved")
                         .HasColumnType("bit");
@@ -288,9 +284,14 @@ namespace Presistance.Migrations
                     b.Property<DateTime>("QRCodeExpiry")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("ScheduleId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CourseCode");
+
+                    b.HasIndex("ScheduleId");
 
                     b.ToTable("Lectures");
                 });
@@ -625,7 +626,15 @@ namespace Presistance.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.Schedule", "Schedule")
+                        .WithMany()
+                        .HasForeignKey("ScheduleId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.Navigation("Course");
+
+                    b.Navigation("Schedule");
                 });
 
             modelBuilder.Entity("Domain.Entities.Schedule", b =>

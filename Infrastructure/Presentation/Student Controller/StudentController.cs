@@ -284,7 +284,7 @@ namespace Presentation.Student_Controller
             return Ok(new
             {
                 CourseCode = courseCode,
-                Hours = $"{presentDays} HRs",
+                Hours = "3 HRs",
                 AttendancePercentage = $"{attendancePercentage:F1}%",
                 Stats = new
                 {
@@ -359,13 +359,13 @@ namespace Presentation.Student_Controller
 
                 var alertData = new
                 {
-                    alert.Id,
+                    //alert.Id,
                     Title = senderName,
                     Time = alert.SentDate.ToString("h:mm tt"),
                     Date = alert.SentDate.ToString("dd/MM/yyyy"),
                     Email = senderEmail,
                     Message = alert.Message,
-                    alert.IsRead
+                    //alert.IsRead
                 };
 
                 if (alert.SentDate.Date == today.Date)

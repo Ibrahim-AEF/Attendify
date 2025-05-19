@@ -126,7 +126,7 @@ namespace Presentation.Instructor_Controller
             return Ok(schedules);
         }
 
-        // Get courses for QR generation
+        // Get courses for QR generation - Updated to match UI
         [HttpGet("courses-for-qr")]
         public async Task<IActionResult> GetCoursesForQrGeneration()
         {
@@ -141,12 +141,15 @@ namespace Presentation.Instructor_Controller
                 .Select(c => new
                 {
                     c.Code,
-                    Lectures = _context.Lectures
-                        .Where(l => l.CourseCode == c.Code)
-                        .Select(l => new
+                    c.Name,
+                    Lectures = _context.Schedules
+                        .Where(s => s.CourseCode == c.Code && s.IsLecture)
+                        .OrderBy(s => s.DayOfWeek)
+                        .ThenBy(s => s.StartTime)
+                        .Select(s => new
                         {
-                            Id = l.Id,
-                            Name = $"{l.LectureName}"
+                            //Id = s.Id,
+                            Name = $"LEC {s.DayOfWeek}" // Or any other naming convention you prefer
                         })
                         .ToList()
                 })
@@ -156,58 +159,63 @@ namespace Presentation.Instructor_Controller
         }
 
 
-        // Get course details
-        [HttpGet("courses/{courseCode}")]
-        public async Task<IActionResult> GetCourseDetails(string courseCode)
+        // Get course details - Updated to include schedule IDs
+      [HttpGet("courses/{courseCode}")]
+      public async Task<IActionResult> GetCourseDetails(string courseCode)
+      {
+      var instructorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+      if (string.IsNullOrEmpty(instructorId))
+      {
+        return Unauthorized();
+      }
+
+       var course = await _context.Courses
+        .Include(c => c.Schedules)
+        .Include(c => c.Lectures)
+        .FirstOrDefaultAsync(c => c.Code == courseCode && c.InstructorId == instructorId);
+
+       if (course == null)
+       {
+        return NotFound(new { message = "Course not found" });
+       }
+
+        // Group schedules by type
+       var lectureSchedules = course.Schedules
+        .Where(s => s.IsLecture)
+        .OrderBy(s => s.DayOfWeek)
+        .ThenBy(s => s.StartTime)
+        .Select(s => new
         {
-            var instructorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(instructorId))
-            {
-                return Unauthorized();
-            }
+            s.Id,
+            Day = s.DayOfWeek.ToString(),
+            Time = $"{s.StartTime:hh\\:mm} - {s.EndTime:hh\\:mm}",
+            s.Location,
+            Type = "Lecture"
+        });
 
-            var course = await _context.Courses
-                .Include(c => c.Schedules)
-                .Include(c => c.Lectures)
-                .FirstOrDefaultAsync(c => c.Code == courseCode && c.InstructorId == instructorId);
+       var sectionSchedules = course.Schedules
+        .Where(s => !s.IsLecture)
+        .OrderBy(s => s.DayOfWeek)
+        .ThenBy(s => s.StartTime)
+        .Select(s => new
+        {
+            s.Id,
+            Day = s.DayOfWeek.ToString(),
+            Time = $"{s.StartTime:hh\\:mm} - {s.EndTime:hh\\:mm}",
+            s.Location,
+            Type = "Section"
+        });
 
-            if (course == null)
-            {
-                return NotFound(new { message = "Course not found" });
-            }
+      return Ok(new
+      {
+        course.Code,
+        course.Name,
+        Lectures = lectureSchedules,
+        Sections = sectionSchedules
+      });
+      }
 
-            var lectures = course.Lectures
-                .OrderBy(l => l.Date)
-                .Select(l => new
-                {
-                    l.Id,
-                    l.Date,
-                    l.QRCode
-                });
-
-            var schedules = course.Schedules
-                .OrderBy(s => s.DayOfWeek)
-                .ThenBy(s => s.StartTime)
-                .Select(s => new
-                {
-                    s.Id,
-                    Day = s.DayOfWeek.ToString(),
-                    StartTime = s.StartTime.ToString(@"hh\:mm"),
-                    EndTime = s.EndTime.ToString(@"hh\:mm"),
-                    s.Location,
-                    Type = s.IsLecture ? "Lecture" : "Section"
-                });
-
-            return Ok(new
-            {
-                course.Code,
-                course.Name,
-                Lectures = lectures,
-                Schedules = schedules
-            });
-        }
-
-        // Generate QR code for a lecture
+        // Generate QR code for a lecture - Updated to match UI
         [HttpPost("generate-qr")]
         public async Task<IActionResult> GenerateQrCode([FromBody] QrCodeGenerationDto qrCodeDto)
         {
@@ -226,24 +234,37 @@ namespace Presentation.Instructor_Controller
                 return BadRequest(new { message = "Course not found or not assigned to you" });
             }
 
+            // Get the schedule to ensure it's a valid lecture
+            var schedule = await _context.Schedules
+                .FirstOrDefaultAsync(s => s.Id == qrCodeDto.ScheduleId &&
+                                        s.CourseCode == qrCodeDto.CourseCode &&
+                                        s.IsLecture);
+
+            if (schedule == null)
+            {
+                return BadRequest(new { message = "Invalid lecture selected" });
+            }
+
             // Create or update lecture
             var lecture = await _context.Lectures
                 .FirstOrDefaultAsync(l => l.CourseCode == qrCodeDto.CourseCode &&
-                                        l.LectureName == qrCodeDto.LectureName);
+                                         l.ScheduleId == qrCodeDto.ScheduleId &&
+                                         l.Date.Date == DateTime.Today);
 
             if (lecture == null)
             {
                 lecture = new Lecture
                 {
                     CourseCode = qrCodeDto.CourseCode,
-                    Date = qrCodeDto.LectureDate,
-                    LectureName = qrCodeDto.LectureName
+                    ScheduleId = qrCodeDto.ScheduleId,
+                    Date = DateTime.Today,
+                    LectureName = $"LEC {schedule.DayOfWeek}" // Or your naming convention
                 };
                 _context.Lectures.Add(lecture);
             }
 
-            // Generate QR code (in a real app, you'd use a QR code generation library)
-            var qrCodeData = $"{course.Code}|{lecture.Date:yyyyMMdd}|{lecture.LectureName}|{DateTime.UtcNow.Ticks}";
+            // Generate QR code data (simplified for example)
+            var qrCodeData = $"{course.Code}|{DateTime.Today:yyyyMMdd}|{lecture.LectureName}|{DateTime.UtcNow.Ticks}";
 
             lecture.QRCode = qrCodeData;
             lecture.QRCodeExpiry = DateTime.UtcNow.AddHours(1);
@@ -252,12 +273,12 @@ namespace Presentation.Instructor_Controller
             return Ok(new
             {
                 CourseCode = course.Code,
-                Lecture = $"{lecture.LectureName}",
+                LectureName = lecture.LectureName,
                 QRCode = qrCodeData,
-                ShareLink = $"{_configuration["BaseUrl"]}/qr/{qrCodeData}"
+                ShareLink = $"{_configuration["BaseUrl"]}/qr/{Uri.EscapeDataString(qrCodeData)}",
+                Expiry = lecture.QRCodeExpiry
             });
         }
-
         // Get enrolled students for a course
         [HttpGet("courses/{courseCode}/students")]
         public async Task<IActionResult> GetEnrolledStudents(string courseCode)
@@ -450,9 +471,9 @@ namespace Presentation.Instructor_Controller
 
         }
 
-        // Get attendance report
-        [HttpGet("attendance-report")]
-        public async Task<IActionResult> GetAttendanceReport(string courseCode)
+        // Get courses for instructor
+        [HttpGet("instructor-courses")]
+        public async Task<IActionResult> GetInstructorCourses()
         {
             var instructorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(instructorId))
@@ -460,29 +481,16 @@ namespace Presentation.Instructor_Controller
                 return Unauthorized();
             }
 
-            // Verify the course belongs to this instructor if specified
-            if (!string.IsNullOrEmpty(courseCode))
-            {
-                var course = await _context.Courses
-                    .FirstOrDefaultAsync(c => c.Code == courseCode && c.InstructorId == instructorId);
-
-                if (course == null)
-                {
-                    return BadRequest(new { message = "Course not found or not assigned to you" });
-                }
-            }
-
             var courses = await _context.Courses
                 .Where(c => c.InstructorId == instructorId)
-                .Select(c => c.Code)
+                .Select(c => new
+                {
+                    Code = c.Code,
+                    Name = c.Name
+                })
                 .ToListAsync();
 
-            return Ok(new
-            {
-                Courses = courses,
-                // Simplified report data for UI
-                ReportData = new List<object>()
-            });
+            return Ok(courses);
         }
 
         // Send notification to students

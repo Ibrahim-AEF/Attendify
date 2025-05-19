@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Presistance.Migrations
 {
     /// <inheritdoc />
-    public partial class AllModules : Migration
+    public partial class UpdateForQrCode : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -221,29 +221,6 @@ namespace Presistance.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Lectures",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    CourseCode = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    LectureName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    QRCodeExpiry = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    QRCode = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Lectures", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Lectures_Courses_CourseCode",
-                        column: x => x.CourseCode,
-                        principalTable: "Courses",
-                        principalColumn: "Code",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Schedules",
                 columns: table => new
                 {
@@ -322,6 +299,61 @@ namespace Presistance.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Lectures",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CourseCode = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ScheduleId = table.Column<int>(type: "int", nullable: false),
+                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    LectureName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    QRCodeExpiry = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    QRCode = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Lectures", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Lectures_Courses_CourseCode",
+                        column: x => x.CourseCode,
+                        principalTable: "Courses",
+                        principalColumn: "Code",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Lectures_Schedules_ScheduleId",
+                        column: x => x.ScheduleId,
+                        principalTable: "Schedules",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "StudentSchedules",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    StudentId = table.Column<int>(type: "int", nullable: false),
+                    ScheduleId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StudentSchedules", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_StudentSchedules_Schedules_ScheduleId",
+                        column: x => x.ScheduleId,
+                        principalTable: "Schedules",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_StudentSchedules_Students_StudentId",
+                        column: x => x.StudentId,
+                        principalTable: "Students",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AbsenceExcusals",
                 columns: table => new
                 {
@@ -380,32 +412,6 @@ namespace Presistance.Migrations
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Attendances_Students_StudentId",
-                        column: x => x.StudentId,
-                        principalTable: "Students",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "StudentSchedules",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    StudentId = table.Column<int>(type: "int", nullable: false),
-                    ScheduleId = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_StudentSchedules", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_StudentSchedules_Schedules_ScheduleId",
-                        column: x => x.ScheduleId,
-                        principalTable: "Schedules",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_StudentSchedules_Students_StudentId",
                         column: x => x.StudentId,
                         principalTable: "Students",
                         principalColumn: "Id",
@@ -492,6 +498,11 @@ namespace Presistance.Migrations
                 column: "CourseCode");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Lectures_ScheduleId",
+                table: "Lectures",
+                column: "ScheduleId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Schedules_CourseCode",
                 table: "Schedules",
                 column: "CourseCode");
@@ -565,10 +576,10 @@ namespace Presistance.Migrations
                 name: "Lectures");
 
             migrationBuilder.DropTable(
-                name: "Schedules");
+                name: "Students");
 
             migrationBuilder.DropTable(
-                name: "Students");
+                name: "Schedules");
 
             migrationBuilder.DropTable(
                 name: "Courses");

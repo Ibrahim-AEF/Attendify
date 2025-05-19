@@ -1,4 +1,3 @@
-
 using Attendify.Helpers;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
