@@ -559,5 +559,124 @@ namespace Presentation.Student_Controller
                 Session = $"session #{new Random().Next(1000, 9999)}"
             });
         }
+
+        // In StudentController.cs
+        [HttpGet("quizzes/available")]
+        public async Task<IActionResult> GetAvailableQuizzes()
+        {
+            var studentId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            // ... validation ...
+
+            var quizzes = await _context.Quizzes
+                .Where(q => q.Course.Schedules.Any(ss => ss.Id.ToString() == studentId))
+                .Select(q => new
+                {
+                    q.Id,
+                    q.Title,
+                    CourseCode = q.Course.Code,
+                    CourseName = q.Course.Name,
+                    q.Date,
+                    q.StartTime,
+                    q.DurationMinutes,
+                    q.TotalMarks,
+                    IsSubmitted = _context.QuizResults.Any(r => r.QuizId == q.Id && r.StudentId.ToString() == studentId)
+                })
+                .ToListAsync();
+
+            return Ok(quizzes);
+        }
+
+        [HttpGet("quizzes/{quizId}")]
+        public async Task<IActionResult> GetQuiz(int quizId)
+        {
+            var studentId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            // ... validation ...
+
+            var quiz = await _context.Quizzes
+                .Where(q => q.Id == quizId)
+                .Select(q => new QuizViewDto
+                {
+                    Id = q.Id,
+                    Title = q.Title,
+                    CourseCode = q.Course.Code,
+                    Date = q.Date.ToString("yyyy-MM-dd"),
+                    Time = q.StartTime.ToString(@"hh\:mm"),
+                    DurationMinutes = q.DurationMinutes,
+                    TotalMarks = q.TotalMarks,
+                    Questions = q.Questions.Select(qq => new QuizQuestionViewDto
+                    {
+                        Id = qq.Id,
+                        QuestionText = qq.QuestionText,
+                        Options = qq.Options,
+                        CorrectAnswerIndex = null // Don't show answers to student
+                    }).ToList()
+                })
+                .FirstOrDefaultAsync();
+
+            return Ok(quiz);
+        }
+
+        [HttpPost("quizzes/submit")]
+        public async Task<IActionResult> SubmitQuiz([FromBody] QuizSubmissionDto submission)
+        {
+            var studentId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(studentId))
+                return Unauthorized();
+
+            // Get quiz with questions and their marks
+            var quiz = await _context.Quizzes
+                .Include(q => q.Questions)
+                .FirstOrDefaultAsync(q => q.Id == submission.QuizId);
+
+            if (quiz == null)
+                return NotFound("Quiz not found");
+
+            decimal totalScore = 0;
+            var results = new List<QuizQuestionResultDto>();
+
+            foreach (var answer in submission.Answers)
+            {
+                var question = quiz.Questions.FirstOrDefault(q => q.Id == answer.QuestionId);
+                if (question == null) continue;
+
+                var isCorrect = answer.SelectedAnswerIndex == question.CorrectAnswerIndex;
+                var questionScore = isCorrect ? question.Marks : 0;
+                totalScore += questionScore;
+
+                results.Add(new QuizQuestionResultDto
+                {
+                    QuestionText = question.QuestionText,
+                    Options = question.Options,
+                    CorrectAnswerIndex = question.CorrectAnswerIndex,
+                    SelectedAnswerIndex = answer.SelectedAnswerIndex,
+                    IsCorrect = isCorrect,
+                    Marks = question.Marks,
+                    ObtainedMarks = questionScore
+                });
+            }
+
+            // Save result
+            var quizResult = new QuizResult
+            {
+                QuizId = quiz.Id,
+                StudentId = int.Parse(studentId),
+                CompletionTime = DateTime.Now,
+                Score = totalScore,
+                TotalMarks = quiz.TotalMarks,
+                Passed = totalScore >= (quiz.TotalMarks * 0.5m) // 50% to pass
+            };
+
+            _context.QuizResults.Add(quizResult);
+            await _context.SaveChangesAsync();
+
+            return Ok(new QuizResultDto
+            {
+                Score = totalScore,
+                TotalMarks = quiz.TotalMarks,
+                Passed = quizResult.Passed,
+                Questions = results,
+                Percentage = (totalScore / quiz.TotalMarks) * 100
+            });
+        }
     }
 }

@@ -42,5 +42,6 @@ namespace Domain.Entities
         public ICollection<AbsenceExcusal> AbsenceExcusals { get; set; }
         public ICollection<Alert> Alerts { get; set; }
         public ICollection<StudentSchedule> StudentSchedules { get; set; }
+        public ICollection<QuizResult> QuizResults { get; set; }
     }
 }

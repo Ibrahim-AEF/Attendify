@@ -23,5 +23,6 @@ namespace Domain.Entities
         public ICollection<Lecture> Lectures { get; set; }
         public ICollection<StudentCourse> StudentCourses { get; set; }
         public ICollection<Schedule> Schedules { get; set; }
+        public ICollection<Quiz> Quizzes { get; set; }
     }
 }

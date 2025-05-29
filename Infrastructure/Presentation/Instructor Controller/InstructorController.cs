@@ -3,13 +3,16 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Presistance.Data;
+using Service.Abstraction;
 using Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Presentation.Instructor_Controller
@@ -21,11 +24,15 @@ namespace Presentation.Instructor_Controller
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IAiQuizService _aiQuizService; // Add this field
+        private readonly ILogger<InstructorController> _logger;
 
-        public InstructorController(AppDbContext context, IConfiguration configuration)
+        public InstructorController(AppDbContext context, IConfiguration configuration, IAiQuizService aiQuizService , ILogger<InstructorController> logger)
         {
             _context = context;
             _configuration = configuration;
+            _aiQuizService = aiQuizService;
+            _logger = logger;
         }
 
         // Get instructor profile with courses
@@ -555,9 +562,112 @@ namespace Presentation.Instructor_Controller
             });
         }
 
-        // Create quiz
-        [HttpPost("create-quiz")]
-        public async Task<IActionResult> CreateQuiz([FromBody] QuizDto quizDto)
+        [HttpPost("generate-quiz")]
+        public async Task<IActionResult> GenerateQuiz([FromForm] QuizGenerationRequest request)
+        {
+            var instructorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(instructorId))
+            {
+                return Unauthorized();
+            }
+
+            // Verify the course belongs to this instructor
+            var course = await _context.Courses
+                .FirstOrDefaultAsync(c => c.Code == request.CourseCode && c.InstructorId == instructorId);
+
+            if (course == null)
+            {
+                return BadRequest(new { message = "Course not found or not assigned to you" });
+            }
+
+
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var generatedQuiz = await _aiQuizService.GenerateQuizAsync(request);
+
+                return Ok(new
+                {
+                    Title = generatedQuiz.Title,
+                    CourseCode = request.CourseCode,
+                    Date = generatedQuiz.Date,
+                    Time = generatedQuiz.Time,
+                    Duration = generatedQuiz.Duration,
+                    TotalMarks = generatedQuiz.TotalMarks,
+                    Questions = ParseGeneratedQuiz(generatedQuiz.Quiz),
+                    RawQuiz = generatedQuiz.Quiz
+                });
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "AI service communication error");
+                return StatusCode(503, new { message = "AI service unavailable", details = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Quiz generation error");
+                return StatusCode(500, new { message = "Error generating quiz", details = ex.Message });
+            }
+        }
+
+        private List<QuizQuestionDto> ParseGeneratedQuiz(string quizText)
+        {
+            var questions = new List<QuizQuestionDto>();
+            var lines = quizText.Split('\n')
+                               .Where(l => !string.IsNullOrWhiteSpace(l))
+                               .ToList();
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                var line = lines[i].Trim();
+
+                // Detect question (starts with number)
+                if (Regex.IsMatch(line, @"^\d+\."))
+                {
+                    var question = new QuizQuestionDto
+                    {
+                        QuestionText = line.Substring(line.IndexOf('.') + 1).Trim(),
+                        Options = new List<string>(),
+                        CorrectAnswerIndex = -1
+                    };
+
+                    // Parse options
+                    for (int j = i + 1; j < lines.Count; j++)
+                    {
+                        var optionLine = lines[j].Trim();
+
+                        // Option line (A., B., etc.)
+                        if (Regex.IsMatch(optionLine, @"^[A-D]\.\s"))
+                        {
+                            question.Options.Add(optionLine.Substring(2).Trim());
+                        }
+                        // Correct answer line
+                        else if (optionLine.StartsWith("Correct Answer:"))
+                        {
+                            var answerPart = optionLine.Substring("Correct Answer:".Length).Trim();
+                            question.CorrectAnswerIndex = answerPart[0] - 'A'; // A->0, B->1, etc.
+                            break;
+                        }
+                        // Next question or end
+                        else if (Regex.IsMatch(optionLine, @"^\d+\.") || j == lines.Count - 1)
+                        {
+                            break;
+                        }
+                    }
+
+                    questions.Add(question);
+                }
+            }
+
+            return questions;
+        }
+
+        [HttpPost("save-quiz")]
+        public async Task<IActionResult> SaveQuiz([FromBody] QuizViewDto quizDto)
         {
             var instructorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(instructorId))
@@ -574,26 +684,30 @@ namespace Presentation.Instructor_Controller
                 return BadRequest(new { message = "Course not found or not assigned to you" });
             }
 
-            // In a real implementation, you would save the quiz to database
-            // This is simplified for demonstration
-            var quiz = new
+            var quiz = new Quiz
             {
-                quizDto.Title,
-                quizDto.CourseCode,
-                quizDto.DurationMinutes,
-                quizDto.PassMark,
-                Questions = quizDto.Questions.Select(q => new
+                Title = quizDto.Title,
+                CourseCode = quizDto.CourseCode,
+                Date = DateTime.Parse(quizDto.Date),
+                StartTime = TimeSpan.Parse(quizDto.Time),
+                DurationMinutes = quizDto.DurationMinutes,
+                TotalMarks = quizDto.TotalMarks,
+                Questions = quizDto.Questions.Select(q => new QuizQuestion
                 {
-                    q.QuestionText,
-                    q.Options,
-                    CorrectAnswer = q.Options[q.CorrectAnswerIndex]
-                })
+                    QuestionText = q.QuestionText,
+                    Options = q.Options,
+                    CorrectAnswerIndex = q.CorrectAnswerIndex.Value, // Must have answers when saving
+                    Marks = (decimal)quizDto.TotalMarks / quizDto.Questions.Count
+                }).ToList()
             };
+
+            _context.Quizzes.Add(quiz);
+            await _context.SaveChangesAsync();
 
             return Ok(new
             {
-                message = "Quiz created successfully",
-                quiz
+                QuizId = quiz.Id,
+                Message = "Quiz saved successfully"
             });
         }
 

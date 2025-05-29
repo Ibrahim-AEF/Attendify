@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Presistance;
 using Presistance.Data;
+using Service.Abstraction;
+using Services;
 using System.Text;
 
 namespace Attendify
@@ -74,6 +76,8 @@ namespace Attendify
                     ClockSkew = TimeSpan.Zero
                 };
             });
+
+            builder.Services.AddHttpClient<IAiQuizService, AiQuizService>();
 
             // Add JwtHelper
             builder.Services.AddScoped<JwtHelper>();
