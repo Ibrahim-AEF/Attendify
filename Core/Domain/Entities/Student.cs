@@ -31,6 +31,9 @@ namespace Domain.Entities
         public float CGPA { get; set; }
 
         [Required]
+        public string PasswordHash { get; set; } // Added password field
+
+        [Required]
         public string InstructorId { get; set; } // Foreign key to Instructor
 
         // Navigation properties
@@ -38,5 +41,7 @@ namespace Domain.Entities
         public ICollection<Attendance> Attendances { get; set; }
         public ICollection<AbsenceExcusal> AbsenceExcusals { get; set; }
         public ICollection<Alert> Alerts { get; set; }
+        public ICollection<StudentSchedule> StudentSchedules { get; set; }
+        public ICollection<QuizResult> QuizResults { get; set; }
     }
 }

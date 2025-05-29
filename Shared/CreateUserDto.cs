@@ -6,16 +6,13 @@ using System.Threading.Tasks;
 
 namespace Shared
 {
-    public class StudentDto
+    public class CreateUserDto
     {
-        public int Id { get; set; }
-        public string StudentId { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Email { get; set; }
         public string Phone { get; set; }
-        public float CGPA { get; set; }
-        public string InstructorId { get; set; }
-        public string Password { get; set; } // Added password field
+        public string Password { get; set; }
+      
     }
 }

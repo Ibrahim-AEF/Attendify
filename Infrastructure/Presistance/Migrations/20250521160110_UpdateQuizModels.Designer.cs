@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Presistance.Data;
 
@@ -11,9 +12,11 @@ using Presistance.Data;
 namespace Presistance.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250521160110_UpdateQuizModels")]
+    partial class UpdateQuizModels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -340,9 +343,6 @@ namespace Presistance.Migrations
                     b.Property<int>("CorrectAnswerIndex")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("Marks")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<string>("Options")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -378,14 +378,11 @@ namespace Presistance.Migrations
                     b.Property<int>("QuizId")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("Score")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<int>("Score")
+                        .HasColumnType("int");
 
                     b.Property<int>("StudentId")
                         .HasColumnType("int");
-
-                    b.Property<decimal>("TotalMarks")
-                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
@@ -766,7 +763,7 @@ namespace Presistance.Migrations
             modelBuilder.Entity("Domain.Entities.Quiz", b =>
                 {
                     b.HasOne("Domain.Entities.Course", "Course")
-                        .WithMany("Quizzes")
+                        .WithMany()
                         .HasForeignKey("CourseCode")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -794,7 +791,7 @@ namespace Presistance.Migrations
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.Student", "Student")
-                        .WithMany("QuizResults")
+                        .WithMany()
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -946,8 +943,6 @@ namespace Presistance.Migrations
                 {
                     b.Navigation("Lectures");
 
-                    b.Navigation("Quizzes");
-
                     b.Navigation("Schedules");
 
                     b.Navigation("StudentCourses");
@@ -986,8 +981,6 @@ namespace Presistance.Migrations
                     b.Navigation("Alerts");
 
                     b.Navigation("Attendances");
-
-                    b.Navigation("QuizResults");
 
                     b.Navigation("StudentSchedules");
                 });

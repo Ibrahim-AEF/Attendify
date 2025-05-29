@@ -18,18 +18,28 @@ namespace Attendify.Helpers
 
         public string GenerateJwtToken(Admin admin)
         {
+            return GenerateJwtToken(admin.Id, admin.Email, admin.FullName, "Admin");
+        }
+
+        public string GenerateJwtToken(Instructor instructor)
+        {
+            return GenerateJwtToken(instructor.InstructorId, instructor.Email, $"{instructor.FirstName} {instructor.LastName}", "Instructor");
+        }
+
+        public string GenerateJwtToken(string userId, string email, string fullName, string role)
+        {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, admin.Id),
-                new Claim(JwtRegisteredClaimNames.Email, admin.Email),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, admin.Id),
-                new Claim(ClaimTypes.Role, "Admin"),
-                new Claim("fullName", admin.FullName)
-            };
+            new Claim(JwtRegisteredClaimNames.Sub, userId),
+            new Claim(JwtRegisteredClaimNames.Email, email),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(ClaimTypes.NameIdentifier, userId),
+            new Claim(ClaimTypes.Role, role),
+            new Claim("fullName", fullName)
+        };
 
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],

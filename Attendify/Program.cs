@@ -1,4 +1,3 @@
-
 using Attendify.Helpers;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -7,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Presistance;
 using Presistance.Data;
+using Service.Abstraction;
+using Services;
 using System.Text;
 
 namespace Attendify
@@ -17,8 +18,18 @@ namespace Attendify
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll",
+                    builder =>
+                    {
+                        builder.AllowAnyOrigin()
+                               .AllowAnyMethod()
+                               .AllowAnyHeader();
+                    });
+            });
 
+            // Add services to the container.
             //Add DbContext
             builder.Services.AddDbContext<AppDbContext>(options =>
               options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -66,13 +77,20 @@ namespace Attendify
                 };
             });
 
+            builder.Services.AddHttpClient<IAiQuizService, AiQuizService>();
+
             // Add JwtHelper
             builder.Services.AddScoped<JwtHelper>();
 
             // Add AutoMapper
             builder.Services.AddAutoMapper(typeof(Program));
 
+            builder.Services.AddSingleton<IPasswordHasher<Instructor>, PasswordHasher<Instructor>>();
+            builder.Services.AddSingleton<IPasswordHasher<Student>, PasswordHasher<Student>>();
 
+            //
+            builder.Services.AddScoped<JwtHelper>();
+            builder.Services.AddSingleton<IPasswordHasher<Instructor>, PasswordHasher<Instructor>>();
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -80,6 +98,8 @@ namespace Attendify
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
+
+            app.UseCors("AllowAll");
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

@@ -12,8 +12,8 @@ using Presistance.Data;
 namespace Presistance.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250430164023_AddAdmin")]
-    partial class AddAdmin
+    [Migration("20250520211554_AddQuizModels")]
+    partial class AddQuizModels
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -183,12 +183,17 @@ namespace Presistance.Migrations
                     b.Property<int>("LectureId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("LectureId1")
+                        .HasColumnType("int");
+
                     b.Property<int>("StudentId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("LectureId");
+
+                    b.HasIndex("LectureId1");
 
                     b.HasIndex("StudentId");
 
@@ -217,7 +222,7 @@ namespace Presistance.Migrations
 
             modelBuilder.Entity("Domain.Entities.Instructor", b =>
                 {
-                    b.Property<string>("Id")
+                    b.Property<string>("InstructorId")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Department")
@@ -232,10 +237,6 @@ namespace Presistance.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("InstructorId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -244,11 +245,15 @@ namespace Presistance.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.HasKey("InstructorId");
 
                     b.ToTable("Instructors");
                 });
@@ -268,15 +273,165 @@ namespace Presistance.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("LectureName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("QRCode")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("QRCodeExpiry")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ScheduleId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CourseCode");
 
+                    b.HasIndex("ScheduleId");
+
                     b.ToTable("Lectures");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Quiz", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CourseCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DurationMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PassMark")
+                        .HasColumnType("int");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseCode");
+
+                    b.ToTable("Quizzes");
+                });
+
+            modelBuilder.Entity("Domain.Entities.QuizQuestion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CorrectAnswerIndex")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Options")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("QuestionText")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("QuizId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuizId");
+
+                    b.ToTable("QuizQuestions");
+                });
+
+            modelBuilder.Entity("Domain.Entities.QuizResult", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CompletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("Passed")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("QuizId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuizId");
+
+                    b.HasIndex("StudentId");
+
+                    b.ToTable("QuizResults");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Schedule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CourseCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("DayOfWeek")
+                        .HasColumnType("int");
+
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("InstructorId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("IsLecture")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("time");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseCode");
+
+                    b.HasIndex("InstructorId");
+
+                    b.ToTable("Schedules");
                 });
 
             modelBuilder.Entity("Domain.Entities.Student", b =>
@@ -306,6 +461,10 @@ namespace Presistance.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -321,6 +480,35 @@ namespace Presistance.Migrations
                     b.ToTable("Students");
                 });
 
+            modelBuilder.Entity("Domain.Entities.StudentAnswer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsCorrect")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuizResultId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SelectedAnswerIndex")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionId");
+
+                    b.HasIndex("QuizResultId");
+
+                    b.ToTable("StudentAnswers");
+                });
+
             modelBuilder.Entity("Domain.Entities.StudentCourse", b =>
                 {
                     b.Property<int>("StudentId")
@@ -334,6 +522,29 @@ namespace Presistance.Migrations
                     b.HasIndex("CourseCode");
 
                     b.ToTable("StudentCourses");
+                });
+
+            modelBuilder.Entity("Domain.Entities.StudentSchedule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ScheduleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ScheduleId");
+
+                    b.HasIndex("StudentId");
+
+                    b.ToTable("StudentSchedules");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -502,10 +713,14 @@ namespace Presistance.Migrations
             modelBuilder.Entity("Domain.Entities.Attendance", b =>
                 {
                     b.HasOne("Domain.Entities.Lecture", "Lecture")
-                        .WithMany("Attendances")
+                        .WithMany()
                         .HasForeignKey("LectureId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Domain.Entities.Lecture", null)
+                        .WithMany("Attendances")
+                        .HasForeignKey("LectureId1");
 
                     b.HasOne("Domain.Entities.Student", "Student")
                         .WithMany("Attendances")
@@ -537,7 +752,75 @@ namespace Presistance.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.Schedule", "Schedule")
+                        .WithMany()
+                        .HasForeignKey("ScheduleId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.Navigation("Course");
+
+                    b.Navigation("Schedule");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Quiz", b =>
+                {
+                    b.HasOne("Domain.Entities.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseCode")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+                });
+
+            modelBuilder.Entity("Domain.Entities.QuizQuestion", b =>
+                {
+                    b.HasOne("Domain.Entities.Quiz", "Quiz")
+                        .WithMany("Questions")
+                        .HasForeignKey("QuizId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Quiz");
+                });
+
+            modelBuilder.Entity("Domain.Entities.QuizResult", b =>
+                {
+                    b.HasOne("Domain.Entities.Quiz", "Quiz")
+                        .WithMany("Results")
+                        .HasForeignKey("QuizId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Quiz");
+
+                    b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Schedule", b =>
+                {
+                    b.HasOne("Domain.Entities.Course", "Course")
+                        .WithMany("Schedules")
+                        .HasForeignKey("CourseCode")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Instructor", "Instructor")
+                        .WithMany("Schedules")
+                        .HasForeignKey("InstructorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+
+                    b.Navigation("Instructor");
                 });
 
             modelBuilder.Entity("Domain.Entities.Student", b =>
@@ -549,6 +832,25 @@ namespace Presistance.Migrations
                         .IsRequired();
 
                     b.Navigation("Instructor");
+                });
+
+            modelBuilder.Entity("Domain.Entities.StudentAnswer", b =>
+                {
+                    b.HasOne("Domain.Entities.QuizQuestion", "Question")
+                        .WithMany()
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.QuizResult", "QuizResult")
+                        .WithMany("Answers")
+                        .HasForeignKey("QuizResultId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+
+                    b.Navigation("QuizResult");
                 });
 
             modelBuilder.Entity("Domain.Entities.StudentCourse", b =>
@@ -566,6 +868,25 @@ namespace Presistance.Migrations
                         .IsRequired();
 
                     b.Navigation("Course");
+
+                    b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("Domain.Entities.StudentSchedule", b =>
+                {
+                    b.HasOne("Domain.Entities.Schedule", "Schedule")
+                        .WithMany()
+                        .HasForeignKey("ScheduleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Student", "Student")
+                        .WithMany("StudentSchedules")
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Schedule");
 
                     b.Navigation("Student");
                 });
@@ -625,12 +946,16 @@ namespace Presistance.Migrations
                 {
                     b.Navigation("Lectures");
 
+                    b.Navigation("Schedules");
+
                     b.Navigation("StudentCourses");
                 });
 
             modelBuilder.Entity("Domain.Entities.Instructor", b =>
                 {
                     b.Navigation("Courses");
+
+                    b.Navigation("Schedules");
 
                     b.Navigation("Students");
                 });
@@ -640,6 +965,18 @@ namespace Presistance.Migrations
                     b.Navigation("Attendances");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Quiz", b =>
+                {
+                    b.Navigation("Questions");
+
+                    b.Navigation("Results");
+                });
+
+            modelBuilder.Entity("Domain.Entities.QuizResult", b =>
+                {
+                    b.Navigation("Answers");
+                });
+
             modelBuilder.Entity("Domain.Entities.Student", b =>
                 {
                     b.Navigation("AbsenceExcusals");
@@ -647,6 +984,8 @@ namespace Presistance.Migrations
                     b.Navigation("Alerts");
 
                     b.Navigation("Attendances");
+
+                    b.Navigation("StudentSchedules");
                 });
 #pragma warning restore 612, 618
         }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Presistance.Data;
 
@@ -11,9 +12,11 @@ using Presistance.Data;
 namespace Presistance.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250517193118_UpdateForQrCode")]
+    partial class UpdateForQrCode
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -293,109 +296,6 @@ namespace Presistance.Migrations
                     b.ToTable("Lectures");
                 });
 
-            modelBuilder.Entity("Domain.Entities.Quiz", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CourseCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("DurationMinutes")
-                        .HasColumnType("int");
-
-                    b.Property<TimeSpan>("StartTime")
-                        .HasColumnType("time");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("TotalMarks")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CourseCode");
-
-                    b.ToTable("Quizzes");
-                });
-
-            modelBuilder.Entity("Domain.Entities.QuizQuestion", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CorrectAnswerIndex")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("Marks")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Options")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("QuestionText")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("QuizId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("QuizId");
-
-                    b.ToTable("QuizQuestions");
-                });
-
-            modelBuilder.Entity("Domain.Entities.QuizResult", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CompletionTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("Passed")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("QuizId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("Score")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("StudentId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("TotalMarks")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("QuizId");
-
-                    b.HasIndex("StudentId");
-
-                    b.ToTable("QuizResults");
-                });
-
             modelBuilder.Entity("Domain.Entities.Schedule", b =>
                 {
                     b.Property<int>("Id")
@@ -481,32 +381,6 @@ namespace Presistance.Migrations
                     b.HasIndex("InstructorId");
 
                     b.ToTable("Students");
-                });
-
-            modelBuilder.Entity("Domain.Entities.StudentAnswer", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("QuestionId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("QuizResultId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SelectedAnswerIndex")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("QuestionId");
-
-                    b.HasIndex("QuizResultId");
-
-                    b.ToTable("StudentAnswers");
                 });
 
             modelBuilder.Entity("Domain.Entities.StudentCourse", b =>
@@ -763,47 +637,6 @@ namespace Presistance.Migrations
                     b.Navigation("Schedule");
                 });
 
-            modelBuilder.Entity("Domain.Entities.Quiz", b =>
-                {
-                    b.HasOne("Domain.Entities.Course", "Course")
-                        .WithMany("Quizzes")
-                        .HasForeignKey("CourseCode")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Course");
-                });
-
-            modelBuilder.Entity("Domain.Entities.QuizQuestion", b =>
-                {
-                    b.HasOne("Domain.Entities.Quiz", "Quiz")
-                        .WithMany("Questions")
-                        .HasForeignKey("QuizId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Quiz");
-                });
-
-            modelBuilder.Entity("Domain.Entities.QuizResult", b =>
-                {
-                    b.HasOne("Domain.Entities.Quiz", "Quiz")
-                        .WithMany("Results")
-                        .HasForeignKey("QuizId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.Student", "Student")
-                        .WithMany("QuizResults")
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Quiz");
-
-                    b.Navigation("Student");
-                });
-
             modelBuilder.Entity("Domain.Entities.Schedule", b =>
                 {
                     b.HasOne("Domain.Entities.Course", "Course")
@@ -832,25 +665,6 @@ namespace Presistance.Migrations
                         .IsRequired();
 
                     b.Navigation("Instructor");
-                });
-
-            modelBuilder.Entity("Domain.Entities.StudentAnswer", b =>
-                {
-                    b.HasOne("Domain.Entities.QuizQuestion", "Question")
-                        .WithMany()
-                        .HasForeignKey("QuestionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.QuizResult", "QuizResult")
-                        .WithMany("Answers")
-                        .HasForeignKey("QuizResultId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Question");
-
-                    b.Navigation("QuizResult");
                 });
 
             modelBuilder.Entity("Domain.Entities.StudentCourse", b =>
@@ -946,8 +760,6 @@ namespace Presistance.Migrations
                 {
                     b.Navigation("Lectures");
 
-                    b.Navigation("Quizzes");
-
                     b.Navigation("Schedules");
 
                     b.Navigation("StudentCourses");
@@ -967,18 +779,6 @@ namespace Presistance.Migrations
                     b.Navigation("Attendances");
                 });
 
-            modelBuilder.Entity("Domain.Entities.Quiz", b =>
-                {
-                    b.Navigation("Questions");
-
-                    b.Navigation("Results");
-                });
-
-            modelBuilder.Entity("Domain.Entities.QuizResult", b =>
-                {
-                    b.Navigation("Answers");
-                });
-
             modelBuilder.Entity("Domain.Entities.Student", b =>
                 {
                     b.Navigation("AbsenceExcusals");
@@ -986,8 +786,6 @@ namespace Presistance.Migrations
                     b.Navigation("Alerts");
 
                     b.Navigation("Attendances");
-
-                    b.Navigation("QuizResults");
 
                     b.Navigation("StudentSchedules");
                 });
